@@ -1,0 +1,263 @@
+{
+  "project_info": {
+    "project_number": "821627224403",
+    "firebase_url": "https://booking-7b808-default-rtdb.firebaseio.com",
+    "project_id": "booking-7b808",
+    "storage_bucket": "booking-7b808.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821627224403:android:490e9cd01ce5da6fe621a6",
+        "android_client_info": {
+          "package_name": "com.example.facerecognition"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXcmOwtZAfmDDHpSsQDLeZc3lWXFBDokw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821627224403-3s03qp677j109q93pp7osus0c3qelsbl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iqonic.user"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821627224403:android:f5a0402657663970e621a6",
+        "android_client_info": {
+          "package_name": "com.example.in2niaga"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXcmOwtZAfmDDHpSsQDLeZc3lWXFBDokw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821627224403-3s03qp677j109q93pp7osus0c3qelsbl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iqonic.user"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821627224403:android:ce4669fc1265aee5e621a6",
+        "android_client_info": {
+          "package_name": "com.example.in2niaga1"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXcmOwtZAfmDDHpSsQDLeZc3lWXFBDokw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821627224403-3s03qp677j109q93pp7osus0c3qelsbl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iqonic.user"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821627224403:android:c14b4be645b8ec44e621a6",
+        "android_client_info": {
+          "package_name": "com.example.in2niaga2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXcmOwtZAfmDDHpSsQDLeZc3lWXFBDokw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821627224403-3s03qp677j109q93pp7osus0c3qelsbl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iqonic.user"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821627224403:android:f1057b7c5a53111ee621a6",
+        "android_client_info": {
+          "package_name": "com.iqonic.provider"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXcmOwtZAfmDDHpSsQDLeZc3lWXFBDokw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821627224403-3s03qp677j109q93pp7osus0c3qelsbl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iqonic.user"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821627224403:android:356605cf61b387dce621a6",
+        "android_client_info": {
+          "package_name": "com.iqonic.servicebooking"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXcmOwtZAfmDDHpSsQDLeZc3lWXFBDokw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821627224403-3s03qp677j109q93pp7osus0c3qelsbl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iqonic.user"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:821627224403:android:ab1772f8ec89a2cce621a6",
+        "android_client_info": {
+          "package_name": "com.tuttofare.top"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDXcmOwtZAfmDDHpSsQDLeZc3lWXFBDokw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "821627224403-cviu33i72tskui65qoomragnd57pu2gd.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "821627224403-3s03qp677j109q93pp7osus0c3qelsbl.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.iqonic.user"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
