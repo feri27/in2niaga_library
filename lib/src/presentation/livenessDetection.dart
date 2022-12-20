@@ -153,7 +153,7 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
                                   Text(
                                     'Pleasewait...',
                                     style: TextStyle(
-                                      fontSize: 22,
+                                      fontSize: 18,
                                       fontFamily: "Roboto",
                                       fontWeight: FontWeight.w500,
                                     ),

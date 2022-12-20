@@ -42,7 +42,7 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   String? result;
 
-  Future<void> eyeBlink() async {
+  Future<void> liveness() async {
     final results = await availableCameras().then(
       (value) => Navigator.push(
         context,
@@ -71,7 +71,7 @@ class _MyHomePageState extends State<MyHomePage> {
           children: <Widget>[
             GestureDetector(
               behavior: HitTestBehavior.opaque,
-              onTap: eyeBlink,
+              onTap: liveness,
               child: const SizedBox(
                 height: 60.0,
                 child: Card(
