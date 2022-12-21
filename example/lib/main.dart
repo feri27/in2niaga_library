@@ -1,7 +1,12 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
 import 'package:in2niaga_library/in2niaga_library.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
+
+final ImagePicker _picker = ImagePicker();
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -59,6 +64,56 @@ class _MyHomePageState extends State<MyHomePage> {
     }
   }
 
+  void showPicker(context) {
+    showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        content: const Text('Pick photo from?'),
+        actions: <Widget>[
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _picker
+                  .pickImage(source: ImageSource.gallery)
+                  .then((value) async {
+                if (value != null) {
+                  setState(() {
+                    result = "Pleasewait..";
+                  });
+                  var res = await In2niaga().imageSharpness(value.path);
+
+                  setState(() {
+                    result = 'Sharpness: $res';
+                  });
+                }
+              });
+            },
+            child: const Text('Gallery'),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _picker.pickImage(source: ImageSource.camera).then((value) async {
+                if (value != null) {
+                  setState(() {
+                    result = "Pleasewait..";
+                  });
+
+                  var res = await In2niaga().imageSharpness(value.path);
+
+                  setState(() {
+                    result = 'Sharpness: $res';
+                  });
+                }
+              });
+            },
+            child: const Text('Camera'),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -78,6 +133,23 @@ class _MyHomePageState extends State<MyHomePage> {
                   color: Colors.green,
                   child: Center(
                     child: Text('Liveness Detection',
+                        style: TextStyle(
+                            color: Colors.white, fontFamily: "Roboto")),
+                  ),
+                ),
+              ),
+            ),
+            GestureDetector(
+              behavior: HitTestBehavior.opaque,
+              onTap: () async {
+                showPicker(context);
+              },
+              child: const SizedBox(
+                height: 60.0,
+                child: Card(
+                  color: Colors.red,
+                  child: Center(
+                    child: Text('Image Sharpness',
                         style: TextStyle(
                             color: Colors.white, fontFamily: "Roboto")),
                   ),

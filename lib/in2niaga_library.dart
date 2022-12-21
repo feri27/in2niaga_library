@@ -1,5 +1,7 @@
 library in2niaga_library;
 
+import 'dart:developer';
+
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as imglib;
 import 'package:in2niaga_library/src/core/image_transformation_functions.dart';
@@ -12,6 +14,7 @@ class In2niaga {
     List grayImg = await compute(grayImage, input);
     final result = await compute(laplacian, grayImg);
 
+    log(result.toString());
     return result;
   }
 }

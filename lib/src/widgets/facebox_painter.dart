@@ -17,9 +17,9 @@ class FaceboxPainter extends CustomPainter {
         Path()
           ..addOval(
             Rect.fromCenter(
-              center: Offset(size.width * 0.5, size.height * 0.5 - 10),
+              center: Offset(size.width * 0.5, size.height * 0.5),
               width: size.width - 60,
-              height: size.width - 20,
+              height: size.width - 50,
             ),
           )
           ..close(),

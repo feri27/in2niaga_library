@@ -20,6 +20,8 @@ dependencies:
   tflite_flutter:
     path: "tflite_flutter"
   http: ^0.13.5
+  cupertino_icons: ^1.0.5
+  ink_page_indicator: ^0.2.1
 
 dev_dependencies:
   flutter_test:

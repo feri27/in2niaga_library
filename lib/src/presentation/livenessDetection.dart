@@ -9,6 +9,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
 import 'package:in2niaga_library/src/constants/colors.dart';
 import 'package:in2niaga_library/src/core/image_transformation_functions.dart';
+import 'package:in2niaga_library/src/widgets/face_painter.dart';
 import 'package:in2niaga_library/src/widgets/facebox_painter.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
@@ -34,7 +35,6 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
   late CameraController controller;
   String? imagePath;
   Uint8List? faceData;
-
   late CameraLensDirection direction;
   late Directory tempDir;
   bool faceFitted = false;
@@ -45,6 +45,8 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
   int index = 0;
   List<String> imageList = [];
   int count = 4;
+  Face? faceDetected;
+  Size? imageSize;
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(enableClassification: true),
@@ -82,9 +84,14 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
 
         return Scaffold(
           appBar: AppBar(
+            leading: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
             backgroundColor: kBlue,
             elevation: 0,
             title: Text(widget.title),
+            centerTitle: true,
           ),
           body: LayoutBuilder(
             builder: (context, constraints) => Stack(
@@ -95,70 +102,108 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
                     child: CameraPreview(controller),
                   ),
                 ),
-                CustomPaint(
-                  painter: FaceboxPainter(),
-                  size: Size(
-                    MediaQuery.of(context).size.width,
-                    constraints.maxHeight * 0.75,
+                if (faceFitted)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: size.height * 0.15,
+                    child: CustomPaint(
+                      painter: FacePainter(
+                          face: faceDetected, imageSize: imageSize!),
+                    ),
+                  ),
+                Align(
+                  alignment: AlignmentDirectional.topCenter,
+                  child: Container(
+                    margin: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    height: 35,
+                    width: 100,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(20),
+                      color: Colors.white.withOpacity(0.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: const [
+                            Padding(
+                              padding: EdgeInsets.symmetric(
+                                  horizontal: 8.0, vertical: 8.0),
+                              child: Text(
+                                "Selfie",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 17,
+                                  fontFamily: "Roboto",
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ),
                 Align(
                   alignment: AlignmentDirectional.bottomCenter,
                   child: Container(
-                    height: constraints.maxHeight * 0.25,
+                    margin: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+                    height: constraints.maxHeight * 0.12,
                     width: double.maxFinite,
-                    color: Colors.white,
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(4),
+                      color: Colors.white.withOpacity(0.5),
+                    ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Padding(
-                              padding: EdgeInsets.all(8.0),
-                              child: Text(
-                                "Selfie",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 20,
-                                  fontFamily: "Roboto",
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding:
-                                  const EdgeInsets.symmetric(horizontal: 8.0),
-                              child: Text(
-                                instruction,
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 22,
-                                  fontFamily: "Roboto",
-                                  fontWeight: FontWeight.w500,
-                                ),
-                              ),
+                            const SizedBox(
+                              height: 25,
                             ),
                             if (proccess)
-                              Column(
+                              Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: const [
                                   // The loading indicator
-                                  CircularProgressIndicator(),
+                                  CircularProgressIndicator(
+                                    backgroundColor: kBlue,
+                                    // valueColor:
+                                    //     AlwaysStoppedAnimation(Colors.blue),
+                                  ),
                                   SizedBox(
-                                    height: 15,
+                                    width: 20,
                                   ),
                                   // Some text
                                   Text(
                                     'Pleasewait...',
                                     style: TextStyle(
-                                      fontSize: 18,
+                                      fontSize: 17,
                                       fontFamily: "Roboto",
-                                      fontWeight: FontWeight.w500,
+                                      fontWeight: FontWeight.w400,
                                     ),
                                   )
                                 ],
+                              ),
+                            if (!proccess)
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 8.0, vertical: 8.0),
+                                child: Text(
+                                  instruction,
+                                  textAlign: TextAlign.center,
+                                  style: const TextStyle(
+                                    fontSize: 17,
+                                    fontFamily: "Roboto",
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
                               ),
                           ],
                         ),
@@ -210,6 +255,14 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
     });
   }
 
+  getImageSize() {
+    assert(controller.value.previewSize != null, 'Preview size is null');
+    return Size(
+      controller.value.previewSize!.height,
+      controller.value.previewSize!.width,
+    );
+  }
+
   Future _processCameraImage(CameraImage image) async {
     if (_isBusy) {
       return;
@@ -231,6 +284,7 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
           inputImage.inputImageData?.imageRotation != null &&
           faces.isNotEmpty) {
         Face face = faces[0];
+        faceDetected = face;
 
         final rotation = inputImage.inputImageData!.imageRotation;
         final absoluteImageSize = inputImage.inputImageData!.size;
@@ -246,6 +300,10 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
             face.boundingBox.right, rotation, size, absoluteImageSize);
 
         final realWidth = realLeft - realRight;
+
+        imageSize = getImageSize();
+
+        log(imageSize.toString());
 
         if (realWidth > realWidthThreshold + marginWidth) {
           instruction = 'Please move backwards from the camera';
