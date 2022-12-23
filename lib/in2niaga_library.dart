@@ -6,6 +6,9 @@ import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as imglib;
 import 'package:in2niaga_library/src/core/image_transformation_functions.dart';
 export 'package:in2niaga_library/src/presentation/livenessDetection.dart';
+export 'package:in2niaga_library/src/function/image_verification.dart';
+export 'package:in2niaga_library/src/presentation/ocr_takeimage.dart';
+export 'package:in2niaga_library/src/function/ocrImage_proccess.dart';
 
 class In2niaga {
   Future<int> imageSharpness(String imagePath) async {
