@@ -150,8 +150,8 @@ class OcrImageProcess {
         Map data = json.decode(res);
         return data;
       } else {
-        log(response.reasonPhrase.toString());
-        return {};
+        Map data = json.decode(response.reasonPhrase.toString());
+        return data;
       }
     } catch (e) {
       if (kDebugMode) {

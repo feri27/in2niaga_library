@@ -81,7 +81,12 @@ class ImageVerivication {
 
           return toJson();
         } else {
-          return {};
+          Map toJson() => {
+                'data_result': response.reasonPhrase,
+                'path_1': faceImage1Path,
+                'path_2': faceImage2Path,
+              };
+          return toJson();
         }
       } catch (e) {
         if (kDebugMode) {
