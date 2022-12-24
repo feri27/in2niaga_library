@@ -1,12 +1,28 @@
 import 'package:flutter/material.dart';
 
+//Add camera overlay UI to the plugin
 class FaceboxPainter extends CustomPainter {
+  final Color borderColor;
+
+  FaceboxPainter(this.borderColor);
+
   @override
   void paint(Canvas canvas, Size size) {
     Paint paint = Paint();
+    Paint borderPaint = Paint()
+      ..color = borderColor
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 5;
 
     paint.strokeWidth = 2.0;
-    paint.color = Colors.white.withOpacity(0.7);
+    paint.color = Colors.black.withOpacity(0.7);
+
+    canvas.drawOval(
+        Rect.fromCenter(
+            center: Offset(size.width * 0.5, size.height * 0.5 - 10),
+            width: size.width - 60,
+            height: size.width - 20),
+        borderPaint);
 
     canvas.drawPath(
       Path.combine(
@@ -17,9 +33,9 @@ class FaceboxPainter extends CustomPainter {
         Path()
           ..addOval(
             Rect.fromCenter(
-              center: Offset(size.width * 0.5, size.height * 0.5),
+              center: Offset(size.width * 0.5, size.height * 0.5 - 10),
               width: size.width - 60,
-              height: size.width - 50,
+              height: size.width - 20,
             ),
           )
           ..close(),

@@ -1,4 +1,6 @@
+import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 
 import 'package:example/custom_dropdown.dart';
 import 'package:flutter/material.dart';
@@ -51,55 +53,108 @@ class _MyHomePageState extends State<MyHomePage> {
   String? image1;
   String? image2;
 
-  String? frontImagePath;
-  String? backImagePath;
+  dynamic frontImagePath;
+  dynamic backImagePath;
 
   bool showBtn = false;
 
   String? idType;
+
+  String? imagePath1;
+  String? imagePath2;
+
+  late Size imageSize = const Size(0.00, 0.00);
+  late Size imageSize2 = const Size(0.00, 0.00);
 
   Future<void> liveness() async {
     final results = await availableCameras().then(
       (value) => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) =>
-              FaceDetectionScreen(title: 'Liveness Detection', cameras: value),
+          builder: (context) => FaceDetectionScreen(cameras: value),
         ),
       ),
     );
     if (results != null) {
+      Map<String, dynamic> data = jsonDecode(results);
       setState(() {
-        _result = results;
+        _result = data['data'];
+        imagePath1 = data['path'];
       });
+      _getImageDimension(imagePath1!);
     }
+  }
+
+  void _getImageDimension(String pathfile) {
+    Image image = Image.memory(File(pathfile).readAsBytesSync());
+    image.image.resolve(const ImageConfiguration()).addListener(
+      ImageStreamListener(
+        (ImageInfo image, bool synchronousCall) {
+          var myImage = image.image;
+          setState(() {
+            imageSize =
+                Size(myImage.width.toDouble(), myImage.height.toDouble());
+          });
+        },
+      ),
+    );
+  }
+
+  void _getImageDimension2(String pathfile) {
+    Image image = Image.memory(File(pathfile).readAsBytesSync());
+    image.image.resolve(const ImageConfiguration()).addListener(
+      ImageStreamListener(
+        (ImageInfo image, bool synchronousCall) {
+          var myImage = image.image;
+          setState(() {
+            imageSize2 =
+                Size(myImage.width.toDouble(), myImage.height.toDouble());
+          });
+        },
+      ),
+    );
   }
 
   Future<void> processFace() async {
     setState(() {
       _result = "Pleasewait..";
+      imagePath1 = null;
+      imagePath2 = null;
     });
     Map? data = await ImageVerivication().process(image1, image2);
-
+    var datas = Map<String, dynamic>.from(data as Map);
     setState(() {
-      _result = data.toString();
+      _result = datas['data_result'].toString();
       image1 = null;
       image2 = null;
+      imagePath1 = datas['path_1'].toString();
+      imagePath2 = datas['path_2'].toString();
     });
+
+    _getImageDimension(imagePath1!);
+    _getImageDimension2(imagePath2!);
   }
 
   Future<void> OcrProcces() async {
     setState(() {
       _result = "Pleasewait..";
+      imagePath1 = null;
+      imagePath2 = null;
     });
     Map? data = await OcrImageProcess()
         .processImage(frontImagePath, backImagePath, idType);
 
+    var datas = Map<String, dynamic>.from(data as Map);
+
     setState(() {
-      _result = data.toString();
+      _result = datas['data_result'].toString();
+
+      imagePath1 = datas['front_path'].toString();
+
       frontImagePath = null;
       backImagePath = null;
     });
+    _getImageDimension(imagePath1!);
   }
 
   Future<void> showPickerId(BuildContext context, String type) async {
@@ -467,13 +522,70 @@ class _MyHomePageState extends State<MyHomePage> {
                 height: 200,
                 width: 300,
                 child: SingleChildScrollView(
-                    child: new Text('Result: $_result',
-                        style: const TextStyle(
-                          letterSpacing: 0.5,
-                          color: Colors.black54,
-                          fontFamily: "Roboto",
-                          fontWeight: FontWeight.w600,
-                        ))))
+                    child: Column(children: [
+                  Text('Result: $_result',
+                      style: const TextStyle(
+                        letterSpacing: 0.5,
+                        color: Colors.black54,
+                        fontFamily: "Roboto",
+                        fontWeight: FontWeight.w600,
+                      )),
+                  Row(children: [
+                    if (imagePath1 != null)
+                      Image.memory(
+                        File(imagePath1 ?? '').readAsBytesSync(),
+                        fit: BoxFit.cover,
+                        width: 130,
+                        height: 100,
+                      ),
+                    const SizedBox(
+                      width: 10,
+                    ),
+                    if (imagePath2 != null)
+                      Image.memory(
+                        File(imagePath2 ?? '').readAsBytesSync(),
+                        fit: BoxFit.cover,
+                        width: 130,
+                        height: 100,
+                      )
+                  ]),
+                  Row(
+                    children: [
+                      if (imagePath1 != null)
+                        Text(
+                          // ignore: unnecessary_null_comparison
+                          imageSize != null
+                              ? 'W : ${imageSize.width.toString()}'
+                              : '',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      if (imagePath1 != null)
+                        Text(
+                          imageSize != null
+                              ? '  H : ${imageSize.height.toString()}'
+                              : '',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      const SizedBox(
+                        width: 50,
+                      ),
+                      if (imagePath2 != null)
+                        Text(
+                          imageSize2 != null
+                              ? 'W : ${imageSize2.width.toString()}'
+                              : '',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      if (imagePath2 != null)
+                        Text(
+                          imageSize2 != null
+                              ? '  H : ${imageSize2.height.toString()}'
+                              : '',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                    ],
+                  )
+                ])))
           ],
         ),
       ),

@@ -349,33 +349,33 @@ class _OcrPageState extends ConsumerState<OcrPageCapture>
                     ),
                   )
                 : const SizedBox(),
-            if (showSharpnessScore)
-              Positioned(
-                top: 10,
-                left: 10,
-                right: 10,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Sharpness score : ' + sharpnessScore.toString(),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
+            // if (showSharpnessScore)
+            Positioned(
+              top: 10,
+              left: 10,
+              right: 10,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Sharpness score : ' + sharpnessScore.toString(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
                     ),
-                    Text(
-                      'Sharpness threshold > ' + sharpnessThreshold.toString(),
-                      style: const TextStyle(
-                        fontSize: 14,
-                        color: Colors.white,
-                        fontWeight: FontWeight.w500,
-                      ),
+                  ),
+                  Text(
+                    'Sharpness threshold > ' + sharpnessThreshold.toString(),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      color: Colors.white,
+                      fontWeight: FontWeight.w500,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
           ],
         );
       }),

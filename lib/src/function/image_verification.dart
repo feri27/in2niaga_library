@@ -59,22 +59,34 @@ class ImageVerivication {
       String faceImage2Path = '${tempDir.path}/2-$dt.jpg';
       File(faceImage2Path).writeAsBytesSync(imglib.encodeJpg(faceImage2));
 
-      var request = http.MultipartRequest(
-          'POST', Uri.parse('http://13.214.153.201/v1/verify?threshold=0.42'));
-      request.files
-          .add(await http.MultipartFile.fromPath('file1', faceImage1Path));
-      request.files
-          .add(await http.MultipartFile.fromPath('file2', faceImage2Path));
+      try {
+        var request = http.MultipartRequest('POST',
+            Uri.parse('http://13.214.153.201/v1/verify?threshold=0.42'));
+        request.files
+            .add(await http.MultipartFile.fromPath('file1', faceImage1Path));
+        request.files
+            .add(await http.MultipartFile.fromPath('file2', faceImage2Path));
 
-      http.StreamedResponse response = await request.send();
-      String res = await response.stream.bytesToString();
+        http.StreamedResponse response = await request.send();
+        String res = await response.stream.bytesToString();
 
-      if (response.statusCode == 200) {
-        Map data = json.decode(res);
+        log(res.toString());
 
-        return data;
-      } else {
-        return {};
+        if (response.statusCode == 200) {
+          Map toJson() => {
+                'data_result': res,
+                'path_1': faceImage1Path,
+                'path_2': faceImage2Path,
+              };
+
+          return toJson();
+        } else {
+          return {};
+        }
+      } catch (e) {
+        if (kDebugMode) {
+          print('error $e');
+        }
       }
     }
   }

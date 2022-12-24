@@ -7,22 +7,19 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_mlkit_face_detection/google_mlkit_face_detection.dart';
-import 'package:in2niaga_library/src/constants/colors.dart';
-import 'package:in2niaga_library/src/core/image_transformation_functions.dart';
-import 'package:in2niaga_library/src/widgets/face_painter.dart';
-import 'package:in2niaga_library/src/widgets/facebox_painter.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
 import 'package:image/image.dart' as imglib;
+import 'package:in2niaga_library/src/core/image_transformation_functions.dart';
+import 'package:in2niaga_library/src/widgets/facebox_painter.dart';
+import 'package:path_provider/path_provider.dart';
 
 final Color textColor = Colors.white.withOpacity(0.4);
 
 class FaceDetectionScreen extends ConsumerStatefulWidget {
-  final String title;
   final List<CameraDescription> cameras;
+
   const FaceDetectionScreen({
     Key? key,
-    required this.title,
     required this.cameras,
   }) : super(key: key);
 
@@ -35,6 +32,7 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
   late CameraController controller;
   String? imagePath;
   Uint8List? faceData;
+
   late CameraLensDirection direction;
   late Directory tempDir;
   bool faceFitted = false;
@@ -45,8 +43,8 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
   int index = 0;
   List<String> imageList = [];
   int count = 4;
-  Face? faceDetected;
-  Size? imageSize;
+  Color? borderColor = Colors.red;
+  late String FmagePath;
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(enableClassification: true),
@@ -84,14 +82,9 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
 
         return Scaffold(
           appBar: AppBar(
-            leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-            backgroundColor: kBlue,
-            elevation: 0,
-            title: Text(widget.title),
-            centerTitle: true,
+            backgroundColor: Colors.black,
+            toolbarHeight: 100,
+            automaticallyImplyLeading: false,
           ),
           body: LayoutBuilder(
             builder: (context, constraints) => Stack(
@@ -102,109 +95,110 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
                     child: CameraPreview(controller),
                   ),
                 ),
-                if (faceFitted)
-                  Positioned(
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: size.height * 0.15,
-                    child: CustomPaint(
-                      painter: FacePainter(
-                          face: faceDetected, imageSize: imageSize!),
-                    ),
+
+                //Add custom image overlay UI follow requirement
+                CustomPaint(
+                  painter: FaceboxPainter(borderColor!),
+                  size: Size(
+                    MediaQuery.of(context).size.width,
+                    constraints.maxHeight * 0.75,
                   ),
-                Align(
+                ),
+
+                //Add instruction at top of overlay
+                const Align(
                   alignment: AlignmentDirectional.topCenter,
-                  child: Container(
-                    margin: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                    height: 35,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(20),
-                      color: Colors.white.withOpacity(0.5),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: const [
-                            Padding(
-                              padding: EdgeInsets.symmetric(
-                                  horizontal: 8.0, vertical: 8.0),
-                              child: Text(
-                                "Selfie",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 17,
-                                  fontFamily: "Roboto",
-                                  fontWeight: FontWeight.w400,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                  child: Padding(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.0, vertical: 20),
+                    child: Text(
+                      "Fit your face inside the frame until it turns green and hold for 2 seconds.",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                          fontSize: 15,
+                          fontFamily: "Roboto",
+                          fontWeight: FontWeight.normal,
+                          color: Colors.white),
                     ),
                   ),
                 ),
+
+                //Add UI and change background to black color follow requirement
                 Align(
                   alignment: AlignmentDirectional.bottomCenter,
                   child: Container(
-                    margin: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-                    height: constraints.maxHeight * 0.12,
+                    height: constraints.maxHeight * 0.25,
                     width: double.maxFinite,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(4),
-                      color: Colors.white.withOpacity(0.5),
-                    ),
+                    color: Colors.black,
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const SizedBox(
-                              height: 25,
-                            ),
-                            if (proccess)
-                              Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: const [
-                                  // The loading indicator
-                                  CircularProgressIndicator(
-                                    backgroundColor: kBlue,
-                                    // valueColor:
-                                    //     AlwaysStoppedAnimation(Colors.blue),
-                                  ),
-                                  SizedBox(
-                                    width: 20,
-                                  ),
-                                  // Some text
-                                  Text(
-                                    'Pleasewait...',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontFamily: "Roboto",
-                                      fontWeight: FontWeight.w400,
-                                    ),
+                            proccess
+                                ? Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: const [
+                                      // The loading indicator
+                                      SizedBox(
+                                        height: 15,
+                                      ),
+                                      CircularProgressIndicator(
+                                          color: Colors.white),
+                                      SizedBox(
+                                        height: 15,
+                                      ),
+                                      // Some text
+                                      Text(
+                                        'Please wait...',
+                                        style: TextStyle(
+                                            fontSize: 18,
+                                            fontFamily: "Roboto",
+                                            fontWeight: FontWeight.w500,
+                                            color: Colors.white),
+                                      )
+                                    ],
                                   )
-                                ],
-                              ),
-                            if (!proccess)
-                              Padding(
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 8.0, vertical: 8.0),
-                                child: Text(
-                                  instruction,
-                                  textAlign: TextAlign.center,
-                                  style: const TextStyle(
-                                    fontSize: 17,
-                                    fontFamily: "Roboto",
-                                    fontWeight: FontWeight.w400,
+                                : Padding(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 8.0, vertical: 50),
+                                    child: Row(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        //Add cancel bottom to cancel process
+                                        TextButton(
+                                          onPressed: () {
+                                            Navigator.pop(context);
+                                          },
+                                          child: const Text(
+                                            "Cancel",
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(
+                                                fontSize: 15,
+                                                fontFamily: "Roboto",
+                                                fontWeight: FontWeight.normal,
+                                                color: Colors.white),
+                                          ),
+                                        ),
+
+                                        Text(
+                                          instruction,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                              fontSize: 15,
+                                              fontFamily: "Roboto",
+                                              fontWeight: FontWeight.w500,
+                                              color: Colors.white),
+                                        ),
+                                        const SizedBox(
+                                          width: 60,
+                                        ),
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ),
                           ],
                         ),
                       ],
@@ -255,12 +249,27 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
     });
   }
 
-  getImageSize() {
-    assert(controller.value.previewSize != null, 'Preview size is null');
-    return Size(
-      controller.value.previewSize!.height,
-      controller.value.previewSize!.width,
-    );
+  Future<void> takePicture(
+    CameraLensDirection direction,
+    CameraImage image,
+  ) async {
+    Map<String, dynamic> params = {
+      'direction': direction,
+      'image': image,
+    };
+
+    imglib.Image cardImage = await compute(camera2Image, params);
+
+    imglib.Image idImage = await compute(
+        copyResize, {'input': cardImage, 'width': 1080, 'height': 1440});
+
+    String cardImagePath =
+        '${tempDir.path}/${DateTime.now().microsecondsSinceEpoch}.jpg';
+    debugPrint("cardImagePath => $cardImagePath");
+    await File(cardImagePath).writeAsBytes(imglib.encodeJpg(idImage));
+    setState(() {
+      FmagePath = cardImagePath;
+    });
   }
 
   Future _processCameraImage(CameraImage image) async {
@@ -284,7 +293,6 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
           inputImage.inputImageData?.imageRotation != null &&
           faces.isNotEmpty) {
         Face face = faces[0];
-        faceDetected = face;
 
         final rotation = inputImage.inputImageData!.imageRotation;
         final absoluteImageSize = inputImage.inputImageData!.size;
@@ -292,7 +300,7 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
         Size size = MediaQuery.of(context).size;
 
         final realWidthThreshold = size.width * 0.70;
-        final marginWidth = size.width * 0.04;
+        final marginWidth = size.width * 0.05;
 
         final realLeft = translateX(
             face.boundingBox.left, rotation, size, absoluteImageSize);
@@ -301,24 +309,28 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
 
         final realWidth = realLeft - realRight;
 
-        imageSize = getImageSize();
+        final backwardvalue = realWidthThreshold + marginWidth;
+        final forwardvalue = realWidthThreshold - marginWidth;
 
-        log(imageSize.toString());
-
-        if (realWidth > realWidthThreshold + marginWidth) {
-          instruction = 'Please move backwards from the camera';
+        if (realWidth > backwardvalue) {
+          instruction = 'Please move backwards\nfrom the camera';
           faceFitted = false;
           count = 4;
           imageList.clear();
-          setState(() {});
-        } else if (realWidth < realWidthThreshold - marginWidth) {
-          instruction = 'Please move forward to the camera';
+          setState(() {
+            borderColor = Colors.red;
+          });
+        } else if (realWidth < forwardvalue) {
+          instruction = 'Please move forward\nto the camera';
           faceFitted = false;
           count = 4;
           imageList.clear();
-          setState(() {});
+          setState(() {
+            borderColor = Colors.red;
+          });
         } else {
           faceFitted = true;
+          borderColor = Colors.green;
 
           //start code
           Map<String, dynamic> pFace = {
@@ -338,16 +350,17 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
           Uint8List imageFile = File(faceImagePath).readAsBytesSync();
           String bs64 = base64.encode(imageFile);
 
-          imageList.add('"' + bs64 + '"');
+          imageList.add('"$bs64"');
           int counter = count - imageList.length;
 
-          instruction = 'Hold Stil for ' + counter.toString() + '';
+          instruction = 'Hold Stil for $counter';
 
           if (imageList.length == 3) {
+            await takePicture(direction, image);
             await controller.stopImageStream();
             faceFitted = false;
             instruction = '';
-            sendImageAPI();
+            sendImageAPI(faceImagePath);
           }
 
           //end code
@@ -370,25 +383,45 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
     }
   }
 
-  sendImageAPI() async {
-    instruction = "";
-    setState(() {
-      proccess = true;
-    });
-    var headers = {'Content-Type': 'application/json'};
-    var request = http.Request(
-        'POST', Uri.parse('http://18.141.220.19:5051/spoof-imagesList'));
+  //Add imagePath to get capture selfie image path
+  sendImageAPI(String imagePath) async {
+    //Please add catch error exception for error handler
+    try {
+      instruction = "";
+      setState(() {
+        proccess = true;
+      });
 
-    request.body = json.encode({"Images": imageList});
-    request.headers.addAll(headers);
-    http.StreamedResponse response = await request.send();
-    if (response.statusCode == 200) {
-      String res = await response.stream.bytesToString();
-      log(res);
-      Navigator.pop(context, res);
-    } else {
-      log(response.reasonPhrase.toString());
-      Navigator.pop(context, response.reasonPhrase.toString());
+      var headers = {'Content-Type': 'application/json'};
+      var request = http.Request(
+          'POST', Uri.parse('http://18.141.220.19:5051/spoof-imagesList'));
+
+      request.body = json.encode({"Images": imageList});
+      request.headers.addAll(headers);
+      http.StreamedResponse response = await request.send();
+      if (response.statusCode == 200) {
+        String res = await response.stream.bytesToString();
+
+        //Add Image path to pass to the main App
+        Map toJson() => {
+              'data': res,
+              'path': FmagePath,
+            };
+
+        // ignore: use_build_context_synchronously
+        Navigator.pop(context, jsonEncode(toJson()));
+      } else {
+        Map toJson() => {
+              'data': response.reasonPhrase.toString(),
+              'path': FmagePath,
+            };
+        // ignore: use_build_context_synchronously
+        Navigator.pop(context, jsonEncode(toJson()));
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('error $e');
+      }
     }
   }
 }
