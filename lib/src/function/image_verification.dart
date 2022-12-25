@@ -50,7 +50,7 @@ class ImageVerivication {
       imglib.Image faceImage2 = await compute(copyResize, {
         'input': img2,
         'height': 1080,
-        'width': 1925,
+        'width': 810,
       });
 
       log(img2.width.toString());
