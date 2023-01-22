@@ -60,6 +60,21 @@ android {
             signingConfig signingConfigs.debug
         }
     }
+
+     aaptOptions {
+        noCompress "tflite"
+    }
+
+    lintOptions {
+        disable 'InvalidPackage'
+    }
+
+    dexOptions {
+        incremental true
+        javaMaxHeapSize "4g"
+        preDexLibraries true
+        dexInProcess = true
+    }
 }
 
 flutter {

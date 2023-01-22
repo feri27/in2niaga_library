@@ -33,7 +33,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const MyHomePage(title: 'IN2NIAGA PACKAGE TEST'),
+      home: const MyHomePage(title: 'IN2NIAGA PACKAGE'),
     );
   }
 }

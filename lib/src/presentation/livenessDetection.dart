@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:core';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -12,6 +14,7 @@ import 'package:image/image.dart' as imglib;
 import 'package:in2niaga_library/src/core/image_transformation_functions.dart';
 import 'package:in2niaga_library/src/widgets/facebox_painter.dart';
 import 'package:path_provider/path_provider.dart';
+//import 'package:step_progress_indicator/step_progress_indicator.dart';
 
 final Color textColor = Colors.white.withOpacity(0.4);
 
@@ -30,12 +33,14 @@ class FaceDetectionScreen extends ConsumerStatefulWidget {
 class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
     with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   late CameraController controller;
+
   String? imagePath;
   Uint8List? faceData;
-
+  CustomPaint? customPaint;
   late CameraLensDirection direction;
   late Directory tempDir;
   bool faceFitted = false;
+  bool centerHead = false;
   bool proccess = false;
   String instruction = 'No face detected';
   bool _isBusy = false;
@@ -45,6 +50,44 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
   int count = 4;
   Color? borderColor = Colors.red;
   late String FmagePath;
+  late Animation<double> currentStepAnimation;
+  double currentStep = 0;
+  late AnimationController animationController;
+
+  //constrait
+
+  late BoxConstraints cnstrt;
+
+  //smile
+  double smilingProbability = -1;
+  double smilingProbabilityThreshold = 0.6;
+  //blink
+  double rightEyeOpenProbability = -1;
+  double leftEyeOpenProbability = -1;
+  double blinkProbabilityThreshold = 0.1;
+
+  bool processSmile = true;
+  bool processBlink = true;
+  bool processCapture = true;
+  bool processDistance = true;
+  bool processPassive = true;
+
+  //countdown
+  int countdown = 3;
+  bool showCountdown = false;
+  int countdownStart = 0;
+
+  //image
+  imglib.Image faceLivenessImg = imglib.Image(0, 0);
+  imglib.Image faceSmileImg = imglib.Image(0, 0);
+  imglib.Image faceBlinkImg = imglib.Image(0, 0);
+  imglib.Image faceFinalImg = imglib.Image(0, 0);
+
+  //timer
+  late Timer _timer;
+
+  //Frame
+  final GlobalKey key1 = GlobalKey();
 
   final FaceDetector _faceDetector = FaceDetector(
     options: FaceDetectorOptions(enableClassification: true),
@@ -56,11 +99,65 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
       tempDir = value;
     });
 
+    animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(
+        milliseconds: 500,
+      ),
+    );
+    currentStepAnimation = Tween<double>(
+      begin: 0,
+      end: 0,
+    ).animate(
+        CurvedAnimation(parent: animationController, curve: Curves.easeInOut))
+      ..addListener(() {
+        setState(() {});
+      });
+
+    animationController.forward();
+
     direction = widget.cameras[widget.cameras.length - 1].lensDirection;
     _setupCamera();
 
     super.initState();
   }
+
+  void setProgress(double begin, double end) {
+    animationController.reset();
+    setState(() {
+      currentStep = end;
+    });
+    currentStepAnimation = Tween<double>(
+      begin: begin < 0 ? 0 : begin,
+      end: end < 0 ? 0 : end,
+    ).animate(
+        CurvedAnimation(parent: animationController, curve: Curves.easeInOut))
+      ..addListener(() {
+        setState(() {});
+      });
+
+    animationController.forward();
+  }
+
+  void startTimer() {
+    const oneSec = const Duration(seconds: 1);
+    _timer = new Timer.periodic(
+      oneSec,
+      (Timer timer) {
+        if (countdown == 0) {
+          setState(() {
+            timer.cancel();
+          });
+        } else {
+          setState(() {
+            countdown--;
+          });
+        }
+      },
+    );
+  }
+
+  void test() {}
 
   @override
   Widget build(BuildContext context) {
@@ -75,7 +172,6 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
     return Consumer(
       builder: (context, ref, child) {
         Size size = MediaQuery.of(context).size;
-
         var camera = controller.value;
         var scale = size.aspectRatio * camera.aspectRatio;
         if (scale < 1) scale = 1 / scale;
@@ -98,6 +194,7 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
 
                 //Add custom image overlay UI follow requirement
                 CustomPaint(
+                  key: key1,
                   painter: FaceboxPainter(borderColor!),
                   size: Size(
                     MediaQuery.of(context).size.width,
@@ -272,6 +369,12 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
     });
   }
 
+  bool between(x, min, max) {
+    return x >= min && x <= max;
+  }
+
+  _getPositions() {}
+
   Future _processCameraImage(CameraImage image) async {
     if (_isBusy) {
       return;
@@ -287,6 +390,7 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
       };
 
       final inputImage = await compute(cameraToInputImage, p0);
+
       final faces = await _faceDetector.processImage(inputImage);
 
       if (inputImage.inputImageData?.size != null &&
@@ -312,65 +416,225 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
         final backwardvalue = realWidthThreshold + marginWidth;
         final forwardvalue = realWidthThreshold - marginWidth;
 
+        Map<String, dynamic> pFace = {
+          'direction': direction,
+          'image': image,
+        };
+
+        Size? Frame = key1.currentContext!.size;
+
+        var FrameData = Offset(size.width * 0.5, size.height * 0.5 - 10);
+
+        var frame_left = Frame!.centerLeft(FrameData).dx;
+        var frame_right = Frame.centerRight(FrameData).dx;
+        var frame_top = Frame.topCenter(FrameData).dx;
+        var frame_btm = Frame.bottomCenter(FrameData).dx;
+
+        //log('frame_left: $frame_left frame_right: $frame_right frame_top: $frame_top frame_btm: $frame_btm');
+
+        var FaceBoundingBox = face.boundingBox;
+
+        var left = FaceBoundingBox.left;
+        var right = FaceBoundingBox.right;
+        var top = FaceBoundingBox.top;
+        var btm = FaceBoundingBox.bottom;
+
+        //log(size.height.toString());
+
+        //log('left : $left right : $right top : $top btm : $btm');
+
         if (realWidth > backwardvalue) {
-          instruction = 'Please move backwards\nfrom the camera';
-          faceFitted = false;
-          count = 4;
-          imageList.clear();
-          setState(() {
-            borderColor = Colors.red;
-          });
+          if (processPassive == true) {
+            setState(() {
+              instruction = 'Please move backwards\nfrom the camera';
+              borderColor = Colors.red;
+
+              faceFitted = false;
+            });
+          }
         } else if (realWidth < forwardvalue) {
-          instruction = 'Please move forward\nto the camera';
-          faceFitted = false;
-          count = 4;
-          imageList.clear();
-          setState(() {
-            borderColor = Colors.red;
-          });
+          if (processPassive == true) {
+            setState(() {
+              instruction = 'Please move forward\nto the camera';
+              borderColor = Colors.red;
+
+              faceFitted = false;
+            });
+          }
         } else {
-          faceFitted = true;
-          borderColor = Colors.green;
+          setState(() {
+            faceFitted = true;
+          });
 
-          //start code
-          Map<String, dynamic> pFace = {
-            'direction': direction,
-            'image': image,
-            'rect': face.boundingBox,
-            'crop': true,
-          };
+          if (left > frame_left ||
+              right < frame_right ||
+              top > frame_top ||
+              btm < frame_btm) {
+            setState(() {
+              borderColor = Colors.red;
+              centerHead = false;
+              instruction = 'Fit your face inside the frame!';
+            });
+          } else {
+            setState(() {
+              borderColor = Colors.green;
+              centerHead = true;
+            });
 
-          imglib.Image cropFaceImage = await compute(cameraToImage, pFace);
+            if (processBlink == true &&
+                processSmile == true &&
+                processPassive == true &&
+                centerHead == true) {
+              faceLivenessImg = await compute(camera2Image, pFace);
+
+              setProgress(
+                currentStep,
+                90,
+              );
+              setState(() {
+                processPassive = false;
+                instruction = 'Please blink!';
+              });
+            }
+          }
+        }
+
+        if (currentStep == 90 && centerHead == true && faceFitted == true) {
+          setState(() {
+            instruction = 'Please blink!';
+          });
+        } else if (currentStep == 180 &&
+            centerHead == true &&
+            faceFitted == true) {
+          setState(() {
+            instruction = 'Please smile!';
+          });
+        }
+
+        if (currentStep == 90 &&
+            processBlink == true &&
+            centerHead == true &&
+            faceFitted == true) {
+          leftEyeOpenProbability = face.leftEyeOpenProbability ?? 0;
+          rightEyeOpenProbability = face.rightEyeOpenProbability ?? 0;
+
+          if (leftEyeOpenProbability < blinkProbabilityThreshold ||
+              rightEyeOpenProbability < blinkProbabilityThreshold) {
+            faceBlinkImg = await compute(camera2Image, pFace);
+            setProgress(
+              currentStep,
+              180,
+            );
+            setState(() {
+              processBlink = false;
+              instruction = 'Please smile!';
+            });
+          }
+        }
+
+        if (currentStep == 180 &&
+            processSmile == true &&
+            centerHead == true &&
+            faceFitted == true) {
+          smilingProbability =
+              face.smilingProbability ?? smilingProbabilityThreshold + 1;
+          if (smilingProbability > smilingProbabilityThreshold) {
+            faceSmileImg = await compute(camera2Image, pFace);
+            setProgress(
+              currentStep,
+              270,
+            );
+            setState(() {
+              processSmile = false;
+              instruction = '';
+            });
+          }
+        }
+
+        if (currentStep == 270 &&
+            processCapture == true &&
+            centerHead == true) {
+          if (countdown == 0) {
+            setProgress(
+              currentStep,
+              360,
+            );
+            setState(() {
+              processCapture = false;
+              instruction = 'Taking selfie!';
+            });
+            await takePicture(direction, image);
+          } else {
+            setState(() {
+              showCountdown = true;
+              instruction = 'Taking selfie!';
+            });
+
+            startTimer();
+          }
+        }
+
+        if (currentStep == 360 && processCapture == false) {
+          setState(() {
+            proccess = true;
+            instruction = '';
+          });
 
           int dt = DateTime.now().microsecondsSinceEpoch;
-          String faceImagePath = '${tempDir.path}/1-$dt.jpg';
-          await File(faceImagePath)
-              .writeAsBytes(imglib.encodeJpg(cropFaceImage));
+          //noexpesion
 
-          Uint8List imageFile = File(faceImagePath).readAsBytesSync();
-          String bs64 = base64.encode(imageFile);
+          imglib.Image livenessimg = await compute(copyResize, {
+            'input': faceLivenessImg,
+            // 'width': 480,
+            // 'height': 820,
+          });
 
-          imageList.add('"$bs64"');
-          int counter = count - imageList.length;
+          String faceImagePathLiveness = '${tempDir.path}/noex-$dt.jpg';
+          await File(faceImagePathLiveness)
+              .writeAsBytes(imglib.encodeJpg(livenessimg));
+          Uint8List imageFileLiveness =
+              File(faceImagePathLiveness).readAsBytesSync();
+          String bs64Liveness = base64.encode(imageFileLiveness);
+          imageList.add(bs64Liveness);
 
-          instruction = 'Hold Stil for $counter';
+          //blink
+          imglib.Image blink = await compute(copyResize, {
+            'input': faceBlinkImg,
+            // 'width': 480,
+            // 'height': 640,
+          });
+          String faceImagePathBlink = '${tempDir.path}/blink-$dt.jpg';
+          await File(faceImagePathBlink).writeAsBytes(imglib.encodeJpg(blink));
+          Uint8List imageFileBlink = File(faceImagePathBlink).readAsBytesSync();
+          String bs64Blink = base64.encode(imageFileBlink);
+          imageList.add(bs64Blink);
+
+          //smile
+          imglib.Image smile = await compute(copyResize, {
+            'input': faceSmileImg,
+            // 'width': 480,
+            // 'height': 640,
+          });
+          String faceImagePathSmile = '${tempDir.path}/smile-$dt.jpg';
+          await File(faceImagePathSmile).writeAsBytes(imglib.encodeJpg(smile));
+          Uint8List imageFileSmile = File(faceImagePathSmile).readAsBytesSync();
+          String bs64Smile = base64.encode(imageFileSmile);
+          imageList.add(bs64Smile);
 
           if (imageList.length == 3) {
-            await takePicture(direction, image);
             await controller.stopImageStream();
             faceFitted = false;
             instruction = '';
-            sendImageAPI(faceImagePath);
+            sendImageAPI();
           }
-
-          //end code
-
         }
 
         index++;
       } else {
         instruction = 'No face detected';
+        countdown = 3;
         faceFitted = false;
+        borderColor = Colors.red;
       }
 
       _isBusy = false;
@@ -384,21 +648,17 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
   }
 
   //Add imagePath to get capture selfie image path
-  sendImageAPI(String imagePath) async {
+  sendImageAPI() async {
     //Please add catch error exception for error handler
     try {
-      instruction = "";
-      setState(() {
-        proccess = true;
-      });
-
       var headers = {'Content-Type': 'application/json'};
       var request = http.Request(
-          'POST', Uri.parse('http://18.141.220.19:5051/spoof-imagesList'));
-
+          'POST', Uri.parse('https://api.iqstars.me/In2Niaga/Antispoof.aspx'));
       request.body = json.encode({"Images": imageList});
       request.headers.addAll(headers);
       http.StreamedResponse response = await request.send();
+
+      //log(imageList.toString());
       if (response.statusCode == 200) {
         String res = await response.stream.bytesToString();
 
@@ -415,6 +675,8 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
               'data': response.reasonPhrase.toString(),
               'path': FmagePath,
             };
+
+        print(toJson());
         // ignore: use_build_context_synchronously
         Navigator.pop(context, jsonEncode(toJson()));
       }
