@@ -56,8 +56,8 @@ Future<imglib.Image> path2Image(String path) async {
 
 Future<imglib.Image> copyResize(Map<String, dynamic> params) async {
   imglib.Image input = params["input"];
-  int width = params["width"] ?? 256;
-  int height = params["height"] ?? 256;
+  int width = params["width"] ?? input.width;
+  int height = params["height"] ?? input.height;
 
   return imglib.copyResize(
     input,
@@ -145,46 +145,92 @@ Future<InputImage> cameraToInputImage(Map<String, dynamic> params) async {
   return InputImage.fromBytes(bytes: bytes, inputImageData: inputImageData);
 }
 
+// Future<imglib.Image> camera2Image(Map<String, dynamic> params) async {
+//   try {
+//     final CameraLensDirection direction = params['direction'];
+//     final CameraImage image = params['image'];
+
+//     final int width = image.width;
+//     final int height = image.height;
+
+//     final img = imglib.Image(width, height);
+//     const int hexFF = 0xFF000000;
+//     final int uvyButtonStride = image.planes[1].bytesPerRow;
+//     final int uvPixelStride = image.planes[1].bytesPerPixel ?? 0;
+
+//     for (int x = 0; x < width; x++) {
+//       for (int y = 0; y < height; y++) {
+//         final int uvIndex =
+//             uvPixelStride * (x / 2).floor() + uvyButtonStride * (y / 2).floor();
+//         final int index = y * width + x;
+//         final yp = image.planes[0].bytes[index];
+//         final up = image.planes[1].bytes[uvIndex];
+//         final vp = image.planes[2].bytes[uvIndex];
+
+//         int r = (yp + vp * 1436 / 1024 - 179).round().clamp(0, 255);
+//         int g = (yp - up * 46549 / 131072 + 44 - vp * 93604 / 131072 + 91)
+//             .round()
+//             .clamp(0, 255);
+//         int b = (yp + up * 1814 / 1024 - 227).round().clamp(0, 255);
+
+//         img.data[index] = hexFF | (b << 16) | (g << 8) | r;
+//       }
+//     }
+
+//     var img1 = (direction == CameraLensDirection.front)
+//         ? imglib.copyRotate(img, -90)
+//         : imglib.copyRotate(img, 90);
+
+//     return img1;
+//   } catch (e) {
+//     debugPrint(e.toString());
+//     return imglib.Image(0, 0);
+//   }
+// }
+
 Future<imglib.Image> camera2Image(Map<String, dynamic> params) async {
-  try {
-    final CameraLensDirection direction = params['direction'];
-    final CameraImage image = params['image'];
+  final CameraLensDirection direction = params['direction'];
+  final CameraImage image = params['image'];
 
-    final int width = image.width;
-    final int height = image.height;
+  final int width = image.width;
+  final int height = image.height;
 
-    final img = imglib.Image(width, height);
-    const int hexFF = 0xFF000000;
-    final int uvyButtonStride = image.planes[1].bytesPerRow;
-    final int uvPixelStride = image.planes[1].bytesPerPixel ?? 0;
-    for (int x = 0; x < width; x++) {
-      for (int y = 0; y < height; y++) {
-        final int uvIndex =
-            uvPixelStride * (x / 2).floor() + uvyButtonStride * (y / 2).floor();
-        final int index = y * width + x;
-        final yp = image.planes[0].bytes[index];
-        final up = image.planes[1].bytes[uvIndex];
-        final vp = image.planes[2].bytes[uvIndex];
+  final yRowStride = image.planes[0].bytesPerRow;
+  final uvRowStride = image.planes[1].bytesPerRow;
+  final uvPixelStride = image.planes[1].bytesPerPixel!;
 
-        int r = (yp + vp * 1436 / 1024 - 179).round().clamp(0, 255);
-        int g = (yp - up * 46549 / 131072 + 44 - vp * 93604 / 131072 + 91)
-            .round()
-            .clamp(0, 255);
-        int b = (yp + up * 1814 / 1024 - 227).round().clamp(0, 255);
+  var img = imglib.Image(width, height);
 
-        img.data[index] = hexFF | (b << 16) | (g << 8) | r;
-      }
+  for (var w = 0; w < width; w++) {
+    for (var h = 0; h < height; h++) {
+      final uvIndex =
+          uvPixelStride * (w / 2).floor() + uvRowStride * (h / 2).floor();
+      final index = h * width + w;
+      final yIndex = h * yRowStride + w;
+
+      final y = image.planes[0].bytes[yIndex];
+      final u = image.planes[1].bytes[uvIndex];
+      final v = image.planes[2].bytes[uvIndex];
+
+      img.data[index] = yuv2rgb(y, u, v);
     }
-
-    var img1 = (direction == CameraLensDirection.front)
-        ? imglib.copyRotate(img, -90)
-        : imglib.copyRotate(img, 90);
-
-    return img1;
-  } catch (e) {
-    debugPrint(e.toString());
-    return imglib.Image(0, 0);
   }
+  var img1 = (direction == CameraLensDirection.front)
+      ? imglib.copyRotate(img, -90)
+      : imglib.copyRotate(img, 90);
+
+  return img1;
+}
+
+yuv2rgb(int y, int u, int v) {
+  var r = (y + v * 1436 / 1024 - 179).round();
+  var g = (y - u * 46549 / 131072 + 44 - v * 93604 / 131072 + 91).round();
+  var b = (y + u * 1814 / 1024 - 227).round();
+  r = r.clamp(0, 255);
+  g = g.clamp(0, 255);
+  b = b.clamp(0, 255);
+
+  return 0xff000000 | ((b << 16) & 0xff0000) | ((g << 8) & 0xff00) | (r & 0xff);
 }
 
 Future<imglib.Image> cameraToImage(Map<String, dynamic> params) async {
@@ -245,36 +291,36 @@ Future<imglib.Image> cameraToImage(Map<String, dynamic> params) async {
   }
 }
 
-Future<List> recognize(Map<String, dynamic> params) async {
-  try {
-    final imglib.Image image = params['image'];
-    final Interpreter interpreter = Interpreter.fromAddress(params['address']);
+// Future<List> recognize(Map<String, dynamic> params) async {
+//   try {
+//     final imglib.Image image = params['image'];
+//     final Interpreter interpreter = Interpreter.fromAddress(params['address']);
 
-    const int inputSize = 112;
-    const double mean = 128;
-    const double std = 128;
-    var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
-    var buffer = Float32List.view(convertedBytes.buffer);
-    int pixelIndex = 0;
-    for (var i = 0; i < inputSize; i++) {
-      for (var j = 0; j < inputSize; j++) {
-        var pixel = image.getPixel(j, i);
-        buffer[pixelIndex++] = (imglib.getRed(pixel) - mean) / std;
-        buffer[pixelIndex++] = (imglib.getGreen(pixel) - mean) / std;
-        buffer[pixelIndex++] = (imglib.getBlue(pixel) - mean) / std;
-      }
-    }
-    List input = convertedBytes.buffer.asFloat32List();
+//     const int inputSize = 112;
+//     const double mean = 128;
+//     const double std = 128;
+//     var convertedBytes = Float32List(1 * inputSize * inputSize * 3);
+//     var buffer = Float32List.view(convertedBytes.buffer);
+//     int pixelIndex = 0;
+//     for (var i = 0; i < inputSize; i++) {
+//       for (var j = 0; j < inputSize; j++) {
+//         var pixel = image.getPixel(j, i);
+//         buffer[pixelIndex++] = (imglib.getRed(pixel) - mean) / std;
+//         buffer[pixelIndex++] = (imglib.getGreen(pixel) - mean) / std;
+//         buffer[pixelIndex++] = (imglib.getBlue(pixel) - mean) / std;
+//       }
+//     }
+//     List input = convertedBytes.buffer.asFloat32List();
 
-    input = input.reshape([1, 112, 112, 3]);
-    List output = List.filled(1 * 192, null, growable: false).reshape([1, 192]);
-    interpreter.run(input, output);
-    return output.reshape([192]);
-  } catch (e) {
-    debugPrint(e.toString());
-    return [];
-  }
-}
+//     input = input.reshape([1, 112, 112, 3]);
+//     List output = List.filled(1 * 192, null, growable: false).reshape([1, 192]);
+//     interpreter.run(input, output);
+//     return output.reshape([192]);
+//   } catch (e) {
+//     debugPrint(e.toString());
+//     return [];
+//   }
+// }
 
 Future<double> euclideanDistance(List<List> embeds) async {
   try {
@@ -460,26 +506,26 @@ Future<Float32List> imageToByteListFloat32(imglib.Image image) async {
   }
 }
 
-Future<double> antiSpoofing(Map<String, dynamic> params) async {
-  try {
-    List input = params['input'];
-    final Interpreter interpreter = Interpreter.fromAddress(params['address']);
+// Future<double> antiSpoofing(Map<String, dynamic> params) async {
+//   try {
+//     List input = params['input'];
+//     final Interpreter interpreter = Interpreter.fromAddress(params['address']);
 
-    input = input.reshape([1, 256, 256, 3]);
-    Map<int, Object> output = {};
-    List clssPred = List.filled(1 * 8, null, growable: false).reshape([1, 8]);
-    List leafNodeMask =
-        List.filled(1 * 8, null, growable: false).reshape([1, 8]);
-    output[interpreter.getOutputIndex("Identity")] = clssPred;
-    output[interpreter.getOutputIndex("Identity_1")] = leafNodeMask;
-    interpreter.runForMultipleInputs([input], output);
-    double score = 0;
-    for (int i = 0; i < 8; i++) {
-      score += (clssPred[0][i]).abs() * leafNodeMask[0][i];
-    }
-    return score;
-  } catch (e) {
-    debugPrint(e.toString());
-    return 0;
-  }
-}
+//     input = input.reshape([1, 256, 256, 3]);
+//     Map<int, Object> output = {};
+//     List clssPred = List.filled(1 * 8, null, growable: false).reshape([1, 8]);
+//     List leafNodeMask =
+//         List.filled(1 * 8, null, growable: false).reshape([1, 8]);
+//     output[interpreter.getOutputIndex("Identity")] = clssPred;
+//     output[interpreter.getOutputIndex("Identity_1")] = leafNodeMask;
+//     interpreter.runForMultipleInputs([input], output);
+//     double score = 0;
+//     for (int i = 0; i < 8; i++) {
+//       score += (clssPred[0][i]).abs() * leafNodeMask[0][i];
+//     }
+//     return score;
+//   } catch (e) {
+//     debugPrint(e.toString());
+//     return 0;
+//   }
+// }
