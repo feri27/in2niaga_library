@@ -7,26 +7,29 @@ import 'package:in2niaga_library/src/core/image_transformation_functions.dart';
 import 'package:image/image.dart' as imglib;
 import 'package:path_provider/path_provider.dart';
 
-late Directory tempDir;
-
 class OcrImageProcess {
   Future<Map?> processImage(
-      dynamic image1, dynamic image2, dynamic idType) async {
+      Uint8List? image1, Uint8List? image2, dynamic idType) async {
+    Directory tempDir = await getTemporaryDirectory();
     getApplicationDocumentsDirectory().then((value) {
       tempDir = value;
     });
 
-    Uint8List imageFile1 = File(image1).readAsBytesSync();
+    Uint8List imageFile1 = image1!;
     String b64image1 = base64.encode(imageFile1);
     String b64image2 = '';
     if (image2 == null) {
     } else {
-      Uint8List imageFile2 = File(image2).readAsBytesSync();
+      Uint8List imageFile2 = image2;
       String b64image = base64.encode(imageFile2);
       b64image2 = b64image;
     }
 
-    imglib.Image img1 = await compute(path2Image, image1.toString());
+    String Path =
+        '${tempDir.path}/${DateTime.now().microsecondsSinceEpoch}result_id.jpg';
+    await File(Path).writeAsBytes(image1);
+
+    imglib.Image img1 = await compute(path2Image, Path);
 
     imglib.Image IdImage1 = await compute(copyResize, {
       'input': img1,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:example/custom_dropdown.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:in2niaga_library/in2niaga_library.dart';
 import 'package:camera/camera.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 
 final ImagePicker _picker = ImagePicker();
 
@@ -53,8 +55,8 @@ class _MyHomePageState extends State<MyHomePage> {
   String? image1;
   String? image2;
 
-  dynamic frontImagePath;
-  dynamic backImagePath;
+  Uint8List? frontImagePath;
+  Uint8List? backImagePath;
 
   bool showBtn = false;
 
@@ -62,9 +64,19 @@ class _MyHomePageState extends State<MyHomePage> {
 
   String? imagePath1;
   String? imagePath2;
+  Uint8List? face;
 
   late Size imageSize = const Size(0.00, 0.00);
   late Size imageSize2 = const Size(0.00, 0.00);
+
+  @override
+  void initState() {
+    super.initState();
+  }
+
+  Uint8List convertBase64Image(String base64String) {
+    return Base64Decoder().convert(base64String.split(',').last);
+  }
 
   Future<void> liveness() async {
     final results = await availableCameras().then(
@@ -158,11 +170,11 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Future<void> showPickerId(BuildContext context, String type) async {
-    final result = await availableCameras().then(
+    Map? result = await availableCameras().then(
       (value) => Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => OcrPageCapture(
+          builder: (context) => MaskForCameraView(
             title: "ID Verification",
             cameras: value,
             type: type,
@@ -172,17 +184,20 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
     if (result != null) {
-      log(result);
       setState(() {
         _result = null;
       });
       setState(() {
-        if (type == 'front') {
-          frontImagePath = result;
+        if (type == 'Front') {
+          frontImagePath = result['CARD'];
+          face = result['FACE'];
         } else {
-          backImagePath = result;
+          backImagePath = result['CARD'];
         }
       });
+      print('result $frontImagePath');
+    } else {
+      print('result null');
     }
   }
 
@@ -450,7 +465,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         GestureDetector(
                           behavior: HitTestBehavior.opaque,
                           onTap: () async {
-                            showPickerId(context, 'front');
+                            showPickerId(context, 'Front');
                           },
                           child: SizedBox(
                             height: 50,
@@ -474,7 +489,7 @@ class _MyHomePageState extends State<MyHomePage> {
                           GestureDetector(
                             behavior: HitTestBehavior.opaque,
                             onTap: () async {
-                              showPickerId(context, 'back');
+                              showPickerId(context, 'Back');
                             },
                             child: SizedBox(
                               height: 50,
@@ -544,6 +559,13 @@ class _MyHomePageState extends State<MyHomePage> {
                     if (imagePath2 != null)
                       Image.memory(
                         File(imagePath2 ?? '').readAsBytesSync(),
+                        fit: BoxFit.cover,
+                        width: 130,
+                        height: 100,
+                      ),
+                    if (face != null && imagePath1 != null)
+                      Image.memory(
+                        base64Decode(base64.encode(face!)),
                         fit: BoxFit.cover,
                         width: 130,
                         height: 100,

@@ -424,7 +424,6 @@ class _FaceDetectionScreenState extends ConsumerState<FaceDetectionScreen>
         Size? Frame = key1.currentContext!.size;
 
         var FrameData = Offset(size.width * 0.5, size.height * 0.5 - 10);
-
         var frame_left = Frame!.centerLeft(FrameData).dx;
         var frame_right = Frame.centerRight(FrameData).dx;
         var frame_top = Frame.topCenter(FrameData).dx;
